@@ -14,7 +14,7 @@ double f = INFINITY;
 #define ECHOMAX         400     /* Longest string to echo */
 #define TIMEOUT_SECS    2       /* Seconds between retransmits */
 #define MAXTRIES        5       /* Tries before giving up */
-#define MAXNODES        6
+#define NUMNODES        6
 
 int tries=0;   /* Count of times sent - GLOBAL for signal-handler access */
 
@@ -30,16 +30,16 @@ struct config{
     char ip[30];
 };
 
-struct config neighbors[MAXNODES];  //neighbor table
-char myhostname;  //convert it to char
+struct config neighbors[NUMNODES];  //neighbor table
+char myHost;  //convert it to char
 unsigned short myPort;  //the port of the node that the socket binds to
 
-//print configuration file
+/*Function for printing configuration files*/
 void print_config(struct config c)
 {
     printf("neighbor : %c\n", c.node);
     printf("distance : %d\n", c.distance);
-    printf("IP address : %s\n\n", c.ip);
+    printf("IP : %s\n\n", c.ip);
 }
 
 /*Function for reading config files*/
@@ -48,7 +48,6 @@ void ReadConfigFile(char* filename)
     int  MAXLEN = 25;   /* The maximum number of characters in a line of the text file */
     FILE *fp;
     char buf[MAXLEN];   /* Buffer for a line from the text file */
-    // char sep_ch[]=" ";  /* node name,distance and IP are seperated by spaces*/
     int i=0,j=0;
     char *token;
     fp = fopen(filename, "r");
@@ -84,20 +83,19 @@ void ReadConfigFile(char* filename)
 }
 
 
-
-////routing table declare
-struct rt_entry      //a entries of the routing table
-{
+/* structure for rout table*/
+struct route_element{
     char destination;
     int distance;
     char next_hop;
 };
 
-struct rt_entry routing_table[MAXNODES]; // the routing table
+/*Routing table array of structures*/
+struct route_element routing_table[NUMNODES];
 
 
-//printing routing table
-void print_rt(struct rt_entry r)
+/*printing the routing table*/
+void print_route_table(struct route_element r)
 {
 if(r.next_hop==-1){
 	 printf("destination: %c\t dist : %d\t next_hop : %d\t\n", r.destination,r.distance,r.next_hop);
@@ -111,24 +109,24 @@ void print_routing_table()
     int i;
     //printf("\n\nRouting Table\n");
     printf("---------------\n");
-    for(i=0;i<MAXNODES;i++)
+    for(i=0;i<NUMNODES;i++)
     {
-        print_rt(routing_table[i]);
+        print_route_table(routing_table[i]);
     }
 }
 
-
-void update_routing_from_neighbor()     //update the routing table from the neighbors table
+/*Function for updating routing table from neightbors table*/
+void update_routing_from_neighbor()
 {
     int i,j;
 
-    for(i=0;i<MAXNODES;i++)
+    for(i=0;i<NUMNODES;i++)
     {
         routing_table[i].destination = 65+i;
         routing_table[i].distance = -1;
         routing_table[i].next_hop = -1;
 
-        for(j=0;j<MAXNODES;j++)
+        for(j=0;j<NUMNODES;j++)
         {
             if(routing_table[i].destination == neighbors[j].node)
             {
@@ -145,16 +143,14 @@ struct element{
     char dest;
     int dist;
 };
-
-struct distance_vector      //structure for a distance vector
-{
+/**Structure for a distance vector */
+struct distance_vector{
     char sender;
     int num_of_dests;
-    struct element content[MAXNODES];
-};
+    struct element content[NUMNODES];
+    };
 
-void sendMsg(char *servIP, char* echoString, unsigned short echoServPort)
-{
+void sendMsg(char *servIP, char* echoString, unsigned short echoServPort){
     int sock;                        /* Socket descriptor */
     struct sockaddr_in echoServAddr; /* Echo server address */
     struct sockaddr_in fromAddr;     /* Source address of echo */
@@ -202,7 +198,7 @@ void print_distance_vector(struct distance_vector * dv)
     //printf("\nDistance Vectors\n");
     printf("---------------");
     printf("\nSender: %c\n# of destinations: %d",dv->sender,dv->num_of_dests);
-    for(i=0;i<MAXNODES;i++)
+    for(i=0;i<NUMNODES;i++)
     {
         printf("\nDestination : %c \t Dist: %d",dv->content[i].dest,dv->content[i].dist);
     }
@@ -213,7 +209,7 @@ struct distance_vector* distance_vector_from_routing_table()        //creates a 
 {
     struct distance_vector* dv = (struct distance_vector*)malloc(sizeof(struct distance_vector));
     int i=0;
-    dv->sender = myhostname;
+    dv->sender = myHost;
 
 
     while(neighbors[i].distance!=-1)    //calculating the number of neighbors
@@ -222,7 +218,7 @@ struct distance_vector* distance_vector_from_routing_table()        //creates a 
     }
     dv->num_of_dests = i;
 
-    for(i=0;i<MAXNODES;i++)     //getting distances to each nodes from the routing table
+    for(i=0;i<NUMNODES;i++)     //getting distances to each nodes from the routing table
     {
         dv->content[i].dest = routing_table[i].destination;
         dv->content[i].dist = routing_table[i].distance;
@@ -233,13 +229,13 @@ struct distance_vector* distance_vector_from_routing_table()        //creates a 
 }
 
 
-void convert_to_string(char arr[MAXNODES*5],struct distance_vector* d);
+void convert_to_string(char arr[NUMNODES*5],struct distance_vector* d);
 
 void sendToNeighbors(struct distance_vector* dv)    //send a distance vector to all the neighbors.
 {
     int i=0;
 
-    char msg[MAXNODES*7];
+    char msg[NUMNODES*7];
     convert_to_string(msg,dv);  //map the vector to strint so that it can be sent through a socket
 
     while(neighbors[i].distance!=-1)
@@ -254,7 +250,7 @@ void sendToNeighbors(struct distance_vector* dv)    //send a distance vector to 
 int getNeighbor(char name)  //get the index of the neighbor array to neighbor name given as the argument
 {
     int i;
-    for(i=0;i<MAXNODES;i++)
+    for(i=0;i<NUMNODES;i++)
     {
         if(neighbors[i].node == name)
             break;
@@ -266,9 +262,9 @@ void update_routing_from_distance_vector(struct distance_vector* msg)
 {
     int i,index,changed=0;
     index = getNeighbor(msg->sender);   //get the index of the sender in the neighbor array.
-    for(i=0;i<MAXNODES;i++)
+    for(i=0;i<NUMNODES;i++)
     {
-        if(routing_table[i].destination == myhostname)  //dont update the distance to the same node
+        if(routing_table[i].destination == myHost)  //dont update the distance to the same node
         {
             continue;
         }
@@ -305,7 +301,6 @@ void convert_to_distance_vector(struct distance_vector* d,char* arr)        //de
 {
     int i=0;
     char* token;
-    // char sep_ch[]=",";
     char zero[] = "0";
 
     token = strtok(arr, ",");
@@ -315,7 +310,7 @@ void convert_to_distance_vector(struct distance_vector* d,char* arr)        //de
 
     d->num_of_dests = atoi(token) - atoi(zero);
 
-    for(i=0;i<MAXNODES;i++)
+    for(i=0;i<NUMNODES;i++)
     {
         token = strtok(NULL, ",");
         d->content[i].dest = token[0];
@@ -333,13 +328,11 @@ int main(int argc, char *argv[])
     char hostname[3000];
     hostname[2999] = '\0';
     gethostname(hostname, 2999);
-    myhostname=hostname[0]-32;
-    //printf("Hostname: %c\n", myhostname);
+    myHost=hostname[0]-32;
+    //printf("Hostname: %c\n", myHost);
 
     //step1 read conf file and initialize neighbour table
-    ReadConfigFile(argv[1]);      //read from the configuration file
-    //print_config(neighbours[0]);  //print neighbours
-    //print_config(neighbours[1]);  //print neighbours
+    ReadConfigFile(argv[1]);
 
     //step2 initialize routing table from neighbor table store in routing_table[i]
     update_routing_from_neighbor();
@@ -417,37 +410,29 @@ int main(int argc, char *argv[])
     }
 
     echoBuffer[respStringLen] = '\0';
-
-	//print received
-    //printf("Received Message : %s\n",echoBuffer);
+    /*Converting the echo buffer to distance vectors*/
     convert_to_distance_vector(received_dv,echoBuffer);
 
-	//Print received dist vector
+	/*Print received dist vector*/
 	printf("\nReceived distance vectors are:");
     print_distance_vector(received_dv); //print the received distance vector
 
-	////Print updated routing table
+	/*Print updated routing table*/
 	printf("\n---------------\n");
 	printf("\n Updated routing table \n");
-	update_routing_from_distance_vector(received_dv);   //update the routing table from the received distance vector. if changed, distance vectors will be sent to all the neighbors
-    print_routing_table();  //routing table after update
-
-
-     }
-
+   /*update the routing table from the received distance vector. if changed, distance vectors will be sent to all the neighbors*/
+	update_routing_from_distance_vector(received_dv);
+    print_routing_table();
+    }
      exit(0);
 }
-
-
-
 
 void CatchAlarm(int ignored)     /* Handler for SIGALRM */
 {
     tries += 1;
 }
 
-
-void convert_to_string(char arr[MAXNODES*5],struct distance_vector* d)  //serializing a distance vector to be sent from through a socket
+void convert_to_string(char arr[NUMNODES*5],struct distance_vector* d)  //serializing a distance vector to be sent from through a socket
 {
     int i;
     char nll ='\0';
