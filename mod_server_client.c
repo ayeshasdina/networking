@@ -43,7 +43,7 @@ void print_config(struct config c)
 }
 
 //working//read file
-ReadConfFile(char* filename)    //reads a configuration file and updates the neighbor table
+ReadConfigFile(char* filename)    //reads a configuration file and updates the neighbor table
 {
     int  MAXLEN = 25;   /* The maximum number of characters in a line of the text file */
     FILE *fp;
@@ -110,7 +110,7 @@ struct rt_entry routing_table[MAXNODES]; // the routing table
 
 //printing routing table
 void print_rt(struct rt_entry r)
-{   
+{
 if(r.next_hop==-1){
 	 printf("destination: %c\t dist : %d\t next_hop : %d\t\n", r.destination,r.distance,r.next_hop);
 }else{
@@ -340,24 +340,24 @@ void convert_to_distance_vector(struct distance_vector* d,char* arr)        //de
 }
 
 int main(int argc, char *argv[])
-{     
-    //get my host name 
+{
+    //get my host name
     char hostname[3000];
     hostname[2999] = '\0';
     gethostname(hostname, 2999);
     myhostname=hostname[0]-32;
     //printf("Hostname: %c\n", myhostname);
 
-    //get my name from commmandline 
+    //get my name from commmandline
         //myName=argv[2];
        // mynodeName = (char) *myName;
        //printf("the string is %c\n",mynodeName);
 
        //step1 read conf file and initialize neighbour table
-        ReadConfFile(argv[1]);      //read from the configuration file
+        ReadConfigFile(argv[1]);      //read from the configuration file
         //print_config(neighbours[0]);  //print neighbours
         //print_config(neighbours[1]);  //print neighbours
-      
+
     //step2 initialize routing table from neighbor table store in routing_table[i]
     update_routing_from_neighbor();
 	//print initialize routing table
@@ -365,11 +365,11 @@ int main(int argc, char *argv[])
     print_routing_table();
 
     //step3 send to all neighbors
-     struct distance_vector* d = distance_vector_from_routing_table(); //vectors to send  
+     struct distance_vector* d = distance_vector_from_routing_table(); //vectors to send
      sendToNeighbors(d);        //send the distance vector to all the neighbors
-     
-     
-     struct distance_vector* received_dv = (struct distance_vector*)malloc(sizeof(struct distance_vector)); //vectors to receive    
+
+
+     struct distance_vector* received_dv = (struct distance_vector*)malloc(sizeof(struct distance_vector)); //vectors to receive
      unsigned short echoServPort;     /* Echo server port */
      int echoStringLen;               /* Length of string to echo */
      struct sigaction myAction;       /* For setting signal handler */
@@ -434,15 +434,15 @@ int main(int argc, char *argv[])
     }
 
     echoBuffer[respStringLen] = '\0';
-    
-	//print received 
+
+	//print received
     //printf("Received Message : %s\n",echoBuffer);
     convert_to_distance_vector(received_dv,echoBuffer);
-	
+
 	//Print received dist vector
 	printf("\nReceived distance vectors are:");
     print_distance_vector(received_dv); //print the received distance vector
-    
+
 	////Print updated routing table
 	printf("\n---------------\n");
 	printf("\n Updated routing table \n");
