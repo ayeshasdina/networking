@@ -42,58 +42,46 @@ void print_config(struct config c)
     printf("IP address : %s\n\n", c.ip);
 }
 
-//working//read file
-ReadConfigFile(char* filename)    //reads a configuration file and updates the neighbor table
+/*Function for reading config files*/
+void ReadConfigFile(char* filename)
 {
     int  MAXLEN = 25;   /* The maximum number of characters in a line of the text file */
     FILE *fp;
     char buf[MAXLEN];   /* Buffer for a line from the text file */
-
-    char sep_ch[]=" ";  /* node name,distance and IP are seperated by spaces*/
+    // char sep_ch[]=" ";  /* node name,distance and IP are seperated by spaces*/
     int i=0,j=0;
-
     char *token;
-
-
     fp = fopen(filename, "r");
     if (fp==NULL)
     {
         printf("File %s does not exist!\n", filename);
         exit(1);
     }
-
-
     while (fgets(buf, MAXLEN, fp) != NULL ) {   // read from the file until the end
         if(i==0)
         {
             myPort= atoi(buf);
         }
-
         else
         {
-            token = strtok(buf, sep_ch);
+            token = strtok(buf, " ");
             neighbors[i-1].node = token[0];
             printf("%c\n",token[0]);
 
-            token = strtok(NULL, sep_ch);
+            token = strtok(NULL, " ");
             char p[30];
             strcpy(p,token);
             neighbors[i-1].distance = atoi(p);
             printf("%d\n",atoi(p));
 
-            token = strtok(NULL, sep_ch);
+            token = strtok(NULL, " ");
             printf("%s\n",token);
             strcpy(neighbors[i-1].ip,token);
-
-
         }
-
         i++;
-
     }
-
-    neighbors[i-1].distance = -1;   //end of the neighbor array
-} //read file function
+    neighbors[i-1].distance = -1;
+}
 
 
 
@@ -317,22 +305,22 @@ void convert_to_distance_vector(struct distance_vector* d,char* arr)        //de
 {
     int i=0;
     char* token;
-    char sep_ch[]=",";
+    // char sep_ch[]=",";
     char zero[] = "0";
 
-    token = strtok(arr, sep_ch);
+    token = strtok(arr, ",");
     d->sender = token[0];
 
-    token = strtok(NULL, sep_ch);
+    token = strtok(NULL, ",");
 
     d->num_of_dests = atoi(token) - atoi(zero);
 
     for(i=0;i<MAXNODES;i++)
     {
-        token = strtok(NULL, sep_ch);
+        token = strtok(NULL, ",");
         d->content[i].dest = token[0];
 
-        token = strtok(NULL, sep_ch);
+        token = strtok(NULL, ",");
         d->content[i].dist = atoi(token) - atoi(zero);
 
     }
