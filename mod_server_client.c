@@ -6,7 +6,6 @@
 #include <unistd.h>     /* for close() and alarm() */
 #include <errno.h>      /* for errno and EINTR */
 #include <signal.h>     /* for sigaction() */
-#include <ctype.h>     /* for toupper */
 #include <math.h>
 
 
