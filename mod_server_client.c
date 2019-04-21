@@ -99,35 +99,6 @@ void ReadConfigFile(char* filename)
     neighbors[i-1].distance = -1;
 }
 
-/*Printer functions*/
-
-/*Function for printing configuration files*/
-void print_config(struct config c)
-{
-    printf("neighbor : %c\n", c.node);
-    printf("distance : %d\n", c.distance);
-    printf("IP : %s\n\n", c.ip);
-}
-
-/*printing the routing table*/
-void print_route_table(struct route_element r){
-        if(r.next_hop==-1){
-            printf("destination: %c\t dist : %d\t next_hop : %d\t\n", r.destination,r.distance,r.next_hop);
-        }else{
-            printf("destination: %c\t dist : %d\t next_hop : %c\t\n", r.destination,r.distance,r.next_hop);
-        }
-	}
-
-void print_all_route_table()
-{
-    int i;
-    //printf("\n\nRouting Table\n");
-    printf("---------------\n");
-    for(i=0;i<NUMNODES;i++)
-    {
-        print_route_table(routing_table[i]);
-    }
-}
 
 /*Function for updating routing table from neightbors table*/
 void update_routing_from_neighbor()
@@ -195,18 +166,6 @@ void sendMsg(char *servIP, char* echoString, unsigned short echoServPort){
         DieWithError("sendto() sent a different number of bytes than expected");
 
     close(sock);
-}
-
-void print_distance_vector(struct distance_vector * dv)
-{
-    int i;
-    //printf("\nDistance Vectors\n");
-    printf("---------------");
-    printf("\nSender: %c\n# of destinations: %d",dv->sender,dv->num_of_dests);
-    for(i=0;i<NUMNODES;i++)
-    {
-        printf("\nDestination : %c \t Dist: %d",dv->content[i].dest,dv->content[i].dist);
-    }
 }
 
 
@@ -326,6 +285,50 @@ void convert_to_distance_vector(struct distance_vector* d,char* arr)        //de
     }
 
 }
+
+
+/*Printer functions*/
+
+/*Function for printing configuration files*/
+void print_config(struct config c)
+{
+    printf("neighbor : %c\n", c.node);
+    printf("distance : %d\n", c.distance);
+    printf("IP : %s\n\n", c.ip);
+}
+
+/*printing the routing table*/
+void print_route_table(struct route_element r){
+        if(r.next_hop==-1){
+            printf("destination: %c\t dist : %d\t next_hop : %d\t\n", r.destination,r.distance,r.next_hop);
+        }else{
+            printf("destination: %c\t dist : %d\t next_hop : %c\t\n", r.destination,r.distance,r.next_hop);
+        }
+	}
+
+void print_all_route_table()
+{
+    int i;
+    //printf("\n\nRouting Table\n");
+    printf("---------------\n");
+    for(i=0;i<NUMNODES;i++)
+    {
+        print_route_table(routing_table[i]);
+    }
+}
+
+void print_distance_vector(struct distance_vector * dv)
+{
+    int i;
+    //printf("\nDistance Vectors\n");
+    printf("---------------");
+    printf("\nSender: %c\n# of destinations: %d",dv->sender,dv->num_of_dests);
+    for(i=0;i<NUMNODES;i++)
+    {
+        printf("\nDestination : %c \t Dist: %d",dv->content[i].dest,dv->content[i].dist);
+    }
+}
+
 
 int main(int argc, char *argv[])
 {
