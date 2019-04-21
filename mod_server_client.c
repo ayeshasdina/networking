@@ -17,7 +17,12 @@ double f = INFINITY;
 
 int tries=0;   /* Count of times sent - GLOBAL for signal-handler access */
 
-void DieWithError(char *errorMessage);   /* Error handling function */
+void DieWithError(char *errorMessage)
+{
+    perror(errorMessage);
+    exit(1);
+}
+
 void CatchAlarm(int ignored);            /* Handler for SIGALRM */
 
 
