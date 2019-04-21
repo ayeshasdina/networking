@@ -1,2 +1,2 @@
 msc:
-  gcc -o msc mod_server_client.c
+  gcc -o msc modified_server_client.c
