@@ -56,27 +56,21 @@ void CatchAlarm(int ignored){
     tries += 1;
 }
 
-
 /*Function for reading config files*/
 void ReadConfigFile(char* filename){
-    int  MAXLEN = 25;   /* The maximum number of characters in a line of the text file */
     FILE *fp;
-    char buf[MAXLEN];   /* Buffer for a line from the text file */
+    char buf[100];   /* Buffer for a line from the text file */
     int i=0,j=0;
     char *token;
     fp = fopen(filename, "r");
-    if (fp==NULL)
-    {
+    if (fp==NULL){
         printf("File %s does not exist!\n", filename);
         exit(1);
     }
-    while (fgets(buf, MAXLEN, fp) != NULL ) {   // read from the file until the end
-        if(i==0)
-        {
+    while (fgets(buf, 100, fp) != NULL ) {
+        if(i==0){
             myPort= atoi(buf);
-        }
-        else
-        {
+        }else{
             token = strtok(buf, " ");
             neighbors[i-1].node = token[0];
             printf("%c\n",token[0]);
@@ -102,7 +96,7 @@ void update_route_from_neighbor(){
 
     for(i=0;i<NUMNODES;i++)
     {
-        route_table[i].destination = 99+i;
+        route_table[i].destination = 65+i;
         route_table[i].distance = -1;
         route_table[i].next_hop = -1;
 
@@ -166,32 +160,34 @@ struct distance_vector* distance_vector_from_route_table(){
     int i=0;
     dv->sender = myHost;
 
-
-    while(neighbors[i].distance!=-1)    //calculating the number of neighbors
-    {
+/* calculating the number of neighbors*/
+    while(neighbors[i].distance!=-1){
         i++;
     }
     dv->num_of_dests = i;
-
-    for(i=0;i<NUMNODES;i++)     //getting distances to each nodes from the routing table
-    {
+/*getting distances to each nodes from the routing table*/
+    for(i=0;i<NUMNODES;i++){
         dv->content[i].dest = route_table[i].destination;
         dv->content[i].dist = route_table[i].distance;
     }
-
     return dv;
-
 }
 
 
-void dv_to_str(char arr[NUMNODES*5],struct distance_vector* d);
+/* Processing a distance vector to be sent from through a socket*/
+void dv_to_str(char arr[NUMNODES*5],struct distance_vector* d){
+    int i;
+    char nll ='\0';
+    sprintf(arr,"%c,%d,%c,%d,%c,%d,%c,%d,%c,%d,%c,%d,%c,%d,%c,%d,%c",d->sender,d->num_of_dests,d->content[0].dest,d->content[0].dist,d->content[1].dest,d->content[1].dist,d->content[2].dest,d->content[2].dist,d->content[3].dest,d->content[3].dist,d->content[4].dest,d->content[4].dist,d->content[5].dest,d->content[5].dist,d->content[6].dest,d->content[6].dist,nll);
+}
+
 
 /* send a distance vector to all the neighbors.*/
 void sendToNeighbors(struct distance_vector* dv){
     int i=0;
 
     char msg[NUMNODES*7];
-    dv_to_str(msg,dv);  //map the vector to strint so that it can be sent through a socket
+    dv_to_str(msg,dv);  //converting vector to string to send through a socket
 
     while(neighbors[i].distance!=-1)
     {
@@ -214,44 +210,33 @@ int getNeighbor(char name){
 
 void update_route_from_dv(struct distance_vector* msg){
     int i,index,changed=0;
-    index = getNeighbor(msg->sender);   //get the index of the sender in the neighbor array.
+    index = getNeighbor(msg->sender);   /*get the index of the sender in the neighbor*/
     for(i=0;i<NUMNODES;i++)
-    {
-        if(route_table[i].destination == myHost)  //dont update the distance to the same node
-        {
-            continue;
-        }
+    {   /*Will not update the same node*/
+        if(route_table[i].destination == myHost) continue;
 
-        if(msg->content[i].dist == -1)  //dont update the routing table from a infinite distance
-        {
+        /*skip the neighbors from infinite distance*/
+        if(msg->content[i].dist == -1){
             continue;
-        }
-
-        else if(route_table[i].distance == -1 && msg->content[i].dist != -1)  //if currently the distance value is infinity for a particular destination.
-        {
+        } else if(route_table[i].distance == -1 && msg->content[i].dist != -1){
             route_table[i].distance = msg->content[i].dist + neighbors[index].distance;
             route_table[i].next_hop = msg->sender;
             changed++;
-        }
-        else if(msg->content[i].dist + neighbors[index].distance < route_table[i].distance)   //if the cost of distance vector provided path is better
-        {
-            route_table[i].distance = msg->content[i].dist + neighbors[index].distance;   //update the routing table
+        } /*if the cost of  dv in this path is better*/
+        else if(msg->content[i].dist + neighbors[index].distance < route_table[i].distance) {
+            route_table[i].distance = msg->content[i].dist + neighbors[index].distance;   //updating the routing table
             route_table[i].next_hop = msg->sender;
-            changed++;  //checking whether the routing table has been changed.
+            changed++;  //updating how many times the table has been changed
         }
     }
-
-    if(changed>0)
-    {
+    /*If there was a change*/
+    if(changed>0){
         struct distance_vector* d = distance_vector_from_route_table();
         sendToNeighbors(d);
     }
-
 }
-
 /*Preprocessing the distance vector for message sending*/
-void str_to_dv(struct distance_vector* d,char* arr)
-{
+void str_to_dv(struct distance_vector* d,char* arr){
     int i=0;
     char* token;
     char zero[] = "0";
@@ -270,21 +255,15 @@ void str_to_dv(struct distance_vector* d,char* arr)
 
         token = strtok(NULL, ",");
         d->content[i].dist = atoi(token) - atoi(zero);
-
     }
-
 }
-
-
 /*Printer functions*/
-
 /*Function for printing configuration files*/
 void print_config(struct config c){
     printf("neighbor : %c\n", c.node);
     printf("distance : %d\n", c.distance);
     printf("IP : %s\n\n", c.ip);
 }
-
 /*printing the routing table*/
 void print_route_table(struct route_element r){
         if(r.next_hop==-1){
@@ -314,15 +293,13 @@ void print_distance_vector(struct distance_vector * dv){
         printf("\nDestination : %c \t Dist: %d",dv->content[i].dest,dv->content[i].dist);
     }
 }
-
-
 int main(int argc, char *argv[]){
     //get my host name
     char hostname[3000];
     hostname[2999] = '\0';
     gethostname(hostname, 2999);
     myHost=hostname[0]-32;
-    //printf("Hostname: %c\n", myHost);
+    printf("Hostname: %c\n", myHost);
 
     //step1 read conf file and initialize neighbour table
     ReadConfigFile(argv[1]);
@@ -381,14 +358,11 @@ int main(int argc, char *argv[]){
 
    alarm(TIMEOUT_SECS);        // Set the timeout //
 
-  for (;;) /* Run forever */    //server
+  for (;;) /*Send in a forever loop periodically/
      {
          /* Set the size of the in-out parameter */
          cliAddrLen = sizeof(echoClntAddr);
-
-
-
-         //if not receid the message, check whether a timeout has occured
+         //if not receivedd the message, check whether a timeout has occured
          while((respStringLen = recvfrom(sock, echoBuffer, ECHOMAX, 0,
              (struct sockaddr *) &echoClntAddr, &cliAddrLen)) < 0){
 
@@ -413,16 +387,9 @@ int main(int argc, char *argv[]){
 	/*Print updated routing table*/
 	printf("\n---------------\n");
 	printf("\n Updated routing table \n");
-   /*update the routing table from the received distance vector. if changed, distance vectors will be sent to all the neighbors*/
+   /*update the routing table from the received DV. if changed, distance vectors will be sent to all the neighbors*/
 	update_route_from_dv(received_dv);
     print_all_route_table();
     }
      exit(0);
-}
-
-/* Processing a distance vector to be sent from through a socket*/
-void dv_to_str(char arr[NUMNODES*5],struct distance_vector* d){
-    int i;
-    char nll ='\0';
-    sprintf(arr,"%c,%d,%c,%d,%c,%d,%c,%d,%c,%d,%c,%d,%c,%d,%c,%d,%c",d->sender,d->num_of_dests,d->content[0].dest,d->content[0].dist,d->content[1].dest,d->content[1].dist,d->content[2].dest,d->content[2].dist,d->content[3].dest,d->content[3].dist,d->content[4].dest,d->content[4].dist,d->content[5].dest,d->content[5].dist,d->content[6].dest,d->content[6].dist,nll);
 }
