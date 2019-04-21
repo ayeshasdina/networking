@@ -184,14 +184,14 @@ struct distance_vector* distance_vector_from_route_table(){
 }
 
 
-void dv_to_str(char arr[NUMNODES*5],struct distance_vector* d);
+void convert_to_string(char arr[NUMNODES*5],struct distance_vector* d);
 
 /* send a distance vector to all the neighbors.*/
 void sendToNeighbors(struct distance_vector* dv){
     int i=0;
 
     char msg[NUMNODES*7];
-    dv_to_str(msg,dv);  //map the vector to strint so that it can be sent through a socket
+    convert_to_string(msg,dv);  //map the vector to strint so that it can be sent through a socket
 
     while(neighbors[i].distance!=-1)
     {
@@ -212,7 +212,7 @@ int getNeighbor(char name){
     return i;
 }
 
-void update_route_from_dv(struct distance_vector* msg){
+void update_route_from_distance_vector(struct distance_vector* msg){
     int i,index,changed=0;
     index = getNeighbor(msg->sender);   //get the index of the sender in the neighbor array.
     for(i=0;i<NUMNODES;i++)
@@ -250,7 +250,7 @@ void update_route_from_dv(struct distance_vector* msg){
 }
 
 /*Preprocessing the distance vector for message sending*/
-void str_to_dv(struct distance_vector* d,char* arr)
+void convert_to_distance_vector(struct distance_vector* d,char* arr)
 {
     int i=0;
     char* token;
@@ -404,7 +404,7 @@ int main(int argc, char *argv[]){
 
     echoBuffer[respStringLen] = '\0';
     /*Converting the echo buffer to distance vectors*/
-    str_to_dv(received_dv,echoBuffer);
+    convert_to_distance_vector(received_dv,echoBuffer);
 
 	/*Print received dist vector*/
 	printf("\nReceived distance vectors are:");
@@ -414,14 +414,14 @@ int main(int argc, char *argv[]){
 	printf("\n---------------\n");
 	printf("\n Updated routing table \n");
    /*update the routing table from the received distance vector. if changed, distance vectors will be sent to all the neighbors*/
-	update_route_from_dv(received_dv);
+	update_route_from_distance_vector(received_dv);
     print_all_route_table();
     }
      exit(0);
 }
 
-/* Processing a distance vector to be sent from through a socket*/
-void dv_to_str(char arr[NUMNODES*5],struct distance_vector* d){
+/* Processing distance vector to be sent from through a socket*/
+void convert_to_string(char arr[NUMNODES*5],struct distance_vector* d){
     int i;
     char nll ='\0';
     sprintf(arr,"%c,%d,%c,%d,%c,%d,%c,%d,%c,%d,%c,%d,%c,%d,%c,%d,%c",d->sender,d->num_of_dests,d->content[0].dest,d->content[0].dist,d->content[1].dest,d->content[1].dist,d->content[2].dest,d->content[2].dist,d->content[3].dest,d->content[3].dist,d->content[4].dest,d->content[4].dist,d->content[5].dest,d->content[5].dist,d->content[6].dest,d->content[6].dist,nll);
