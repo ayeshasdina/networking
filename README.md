@@ -31,4 +31,3 @@ Description:
 This program runs a distance vector routing algorithm on GENI experimental nodes.In each node following task are executed.
 1. The program finds its own hostname and reads the confuiguration file to detect its neighbors and their corresponding distance and ip address.
 2. Initializes the routing table based on the information the neighbor table. At this point these are the only information that the node has.
-file:///home/mir/Pictures/Screenshot_20190421_175010.png
