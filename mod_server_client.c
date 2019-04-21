@@ -336,15 +336,10 @@ int main(int argc, char *argv[])
     myhostname=hostname[0]-32;
     //printf("Hostname: %c\n", myhostname);
 
-    //get my name from commmandline
-        //myName=argv[2];
-       // mynodeName = (char) *myName;
-       //printf("the string is %c\n",mynodeName);
-
-       //step1 read conf file and initialize neighbour table
-        ReadConfigFile(argv[1]);      //read from the configuration file
-        //print_config(neighbours[0]);  //print neighbours
-        //print_config(neighbours[1]);  //print neighbours
+    //step1 read conf file and initialize neighbour table
+    ReadConfigFile(argv[1]);      //read from the configuration file
+    //print_config(neighbours[0]);  //print neighbours
+    //print_config(neighbours[1]);  //print neighbours
 
     //step2 initialize routing table from neighbor table store in routing_table[i]
     update_routing_from_neighbor();
