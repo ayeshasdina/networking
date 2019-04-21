@@ -32,7 +32,7 @@ struct route_element{
 };
 
 /*Routing table array of structures*/
-struct route_element route_table[NUMNODES];
+struct route_element routing_table[NUMNODES];
 
 
 struct element{
@@ -51,14 +51,16 @@ void DieWithError(char *errorMessage){
     perror(errorMessage);
     exit(1);
 }
-/* Handler for SIGALRM */
-void CatchAlarm(int ignored){
+
+void CatchAlarm(int ignored)     /* Handler for SIGALRM */
+{
     tries += 1;
 }
 
 
 /*Function for reading config files*/
-void ReadConfigFile(char* filename){
+void ReadConfigFile(char* filename)
+{
     int  MAXLEN = 25;   /* The maximum number of characters in a line of the text file */
     FILE *fp;
     char buf[MAXLEN];   /* Buffer for a line from the text file */
@@ -96,27 +98,32 @@ void ReadConfigFile(char* filename){
     neighbors[i-1].distance = -1;
 }
 
+
 /*Function for updating routing table from neightbors table*/
-void update_route_from_neighbor(){
+void update_routing_from_neighbor()
+{
     int i,j;
 
     for(i=0;i<NUMNODES;i++)
     {
-        route_table[i].destination = 99+i;
-        route_table[i].distance = -1;
-        route_table[i].next_hop = -1;
+        routing_table[i].destination = 65+i;
+        routing_table[i].distance = -1;
+        routing_table[i].next_hop = -1;
 
         for(j=0;j<NUMNODES;j++)
         {
-            if(route_table[i].destination == neighbors[j].node)
+            if(routing_table[i].destination == neighbors[j].node)
             {
-                route_table[i].distance = neighbors[j].distance;
-                route_table[i].next_hop = neighbors[j].node;
+                routing_table[i].distance = neighbors[j].distance;
+                routing_table[i].next_hop = neighbors[j].node;
             }
         }
     }
 
 }
+
+
+
 
 void sendMsg(char *servIP, char* echoString, unsigned short echoServPort){
     int sock;                        /* Socket descriptor */
@@ -160,8 +167,9 @@ void sendMsg(char *servIP, char* echoString, unsigned short echoServPort){
     close(sock);
 }
 
-/*creates a distance vector from the routing table*/
-struct distance_vector* distance_vector_from_route_table(){
+
+struct distance_vector* distance_vector_from_routing_table()        //creates a distance vector from the routing table
+{
     struct distance_vector* dv = (struct distance_vector*)malloc(sizeof(struct distance_vector));
     int i=0;
     dv->sender = myHost;
@@ -175,8 +183,8 @@ struct distance_vector* distance_vector_from_route_table(){
 
     for(i=0;i<NUMNODES;i++)     //getting distances to each nodes from the routing table
     {
-        dv->content[i].dest = route_table[i].destination;
-        dv->content[i].dist = route_table[i].distance;
+        dv->content[i].dest = routing_table[i].destination;
+        dv->content[i].dist = routing_table[i].distance;
     }
 
     return dv;
@@ -186,8 +194,8 @@ struct distance_vector* distance_vector_from_route_table(){
 
 void convert_to_string(char arr[NUMNODES*5],struct distance_vector* d);
 
-/* send a distance vector to all the neighbors.*/
-void sendToNeighbors(struct distance_vector* dv){
+void sendToNeighbors(struct distance_vector* dv)    //send a distance vector to all the neighbors.
+{
     int i=0;
 
     char msg[NUMNODES*7];
@@ -201,8 +209,9 @@ void sendToNeighbors(struct distance_vector* dv){
     }
 }
 
-/*get the index of the neighbors*/
-int getNeighbor(char name){
+
+int getNeighbor(char name)  //get the index of the neighbor array to neighbor name given as the argument
+{
     int i;
     for(i=0;i<NUMNODES;i++)
     {
@@ -212,12 +221,13 @@ int getNeighbor(char name){
     return i;
 }
 
-void update_route_from_distance_vector(struct distance_vector* msg){
+void update_routing_from_distance_vector(struct distance_vector* msg)
+{
     int i,index,changed=0;
     index = getNeighbor(msg->sender);   //get the index of the sender in the neighbor array.
     for(i=0;i<NUMNODES;i++)
     {
-        if(route_table[i].destination == myHost)  //dont update the distance to the same node
+        if(routing_table[i].destination == myHost)  //dont update the distance to the same node
         {
             continue;
         }
@@ -227,30 +237,30 @@ void update_route_from_distance_vector(struct distance_vector* msg){
             continue;
         }
 
-        else if(route_table[i].distance == -1 && msg->content[i].dist != -1)  //if currently the distance value is infinity for a particular destination.
+        else if(routing_table[i].distance == -1 && msg->content[i].dist != -1)  //if currently the distance value is infinity for a particular destination.
         {
-            route_table[i].distance = msg->content[i].dist + neighbors[index].distance;
-            route_table[i].next_hop = msg->sender;
+            routing_table[i].distance = msg->content[i].dist + neighbors[index].distance;
+            routing_table[i].next_hop = msg->sender;
             changed++;
         }
-        else if(msg->content[i].dist + neighbors[index].distance < route_table[i].distance)   //if the cost of distance vector provided path is better
+        else if(msg->content[i].dist + neighbors[index].distance < routing_table[i].distance)   //if the cost of distance vector provided path is better
         {
-            route_table[i].distance = msg->content[i].dist + neighbors[index].distance;   //update the routing table
-            route_table[i].next_hop = msg->sender;
+            routing_table[i].distance = msg->content[i].dist + neighbors[index].distance;   //update the routing table
+            routing_table[i].next_hop = msg->sender;
             changed++;  //checking whether the routing table has been changed.
         }
     }
 
     if(changed>0)
     {
-        struct distance_vector* d = distance_vector_from_route_table();
+        struct distance_vector* d = distance_vector_from_routing_table();
         sendToNeighbors(d);
     }
 
 }
 
-/*Preprocessing the distance vector for message sending*/
-void convert_to_distance_vector(struct distance_vector* d,char* arr)
+
+void convert_to_distance_vector(struct distance_vector* d,char* arr)        //deserializing a distance vector to be sent through a socket
 {
     int i=0;
     char* token;
@@ -279,7 +289,8 @@ void convert_to_distance_vector(struct distance_vector* d,char* arr)
 /*Printer functions*/
 
 /*Function for printing configuration files*/
-void print_config(struct config c){
+void print_config(struct config c)
+{
     printf("neighbor : %c\n", c.node);
     printf("distance : %d\n", c.distance);
     printf("IP : %s\n\n", c.ip);
@@ -294,17 +305,19 @@ void print_route_table(struct route_element r){
         }
 	}
 
-void print_all_route_table(){
+void print_all_route_table()
+{
     int i;
     //printf("\n\nRouting Table\n");
     printf("---------------\n");
     for(i=0;i<NUMNODES;i++)
     {
-        print_route_table(route_table[i]);
+        print_route_table(routing_table[i]);
     }
 }
 
-void print_distance_vector(struct distance_vector * dv){
+void print_distance_vector(struct distance_vector * dv)
+{
     int i;
     //printf("\nDistance Vectors\n");
     printf("---------------");
@@ -316,7 +329,8 @@ void print_distance_vector(struct distance_vector * dv){
 }
 
 
-int main(int argc, char *argv[]){
+int main(int argc, char *argv[])
+{
     //get my host name
     char hostname[3000];
     hostname[2999] = '\0';
@@ -327,14 +341,14 @@ int main(int argc, char *argv[]){
     //step1 read conf file and initialize neighbour table
     ReadConfigFile(argv[1]);
 
-    //step2 initialize routing table from neighbor table store in route_table[i]
-    update_route_from_neighbor();
+    //step2 initialize routing table from neighbor table store in routing_table[i]
+    update_routing_from_neighbor();
 	//print initialize routing table
 	printf("\nInitialized routing table:\n");
     print_all_route_table();
 
     //step3 send to all neighbors
-     struct distance_vector* d = distance_vector_from_route_table(); //vectors to send
+     struct distance_vector* d = distance_vector_from_routing_table(); //vectors to send
      sendToNeighbors(d);        //send the distance vector to all the neighbors
 
 
@@ -395,7 +409,7 @@ int main(int argc, char *argv[]){
       if (errno == EINTR)     // Alarm went off.. timeout has occured.. send distance vector to neighbors.
       {
         printf("\n\nPeriodically sends out the Distance Vector\n\n");
-        d = distance_vector_from_route_table();
+        d = distance_vector_from_routing_table();
         sendToNeighbors(d);
         alarm(TIMEOUT_SECS);
       }
@@ -414,15 +428,18 @@ int main(int argc, char *argv[]){
 	printf("\n---------------\n");
 	printf("\n Updated routing table \n");
    /*update the routing table from the received distance vector. if changed, distance vectors will be sent to all the neighbors*/
-	update_route_from_distance_vector(received_dv);
+	update_routing_from_distance_vector(received_dv);
     print_all_route_table();
     }
      exit(0);
 }
 
-/* Processing distance vector to be sent from through a socket*/
-void convert_to_string(char arr[NUMNODES*5],struct distance_vector* d){
+
+void convert_to_string(char arr[NUMNODES*5],struct distance_vector* d)  //serializing a distance vector to be sent from through a socket
+{
     int i;
     char nll ='\0';
-    sprintf(arr,"%c,%d,%c,%d,%c,%d,%c,%d,%c,%d,%c,%d,%c,%d,%c,%d,%c",d->sender,d->num_of_dests,d->content[0].dest,d->content[0].dist,d->content[1].dest,d->content[1].dist,d->content[2].dest,d->content[2].dist,d->content[3].dest,d->content[3].dist,d->content[4].dest,d->content[4].dist,d->content[5].dest,d->content[5].dist,d->content[6].dest,d->content[6].dist,nll);
+
+     sprintf(arr,"%c,%d,%c,%d,%c,%d,%c,%d,%c,%d,%c,%d,%c,%d,%c,%d,%c",d->sender,d->num_of_dests,d->content[0].dest,d->content[0].dist,d->content[1].dest,d->content[1].dist,d->content[2].dest,d->content[2].dist,d->content[3].dest,d->content[3].dist,d->content[4].dest,d->content[4].dist,d->content[5].dest,d->content[5].dist,d->content[6].dest,d->content[6].dist,nll);
+
 }
