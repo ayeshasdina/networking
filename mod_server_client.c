@@ -23,9 +23,10 @@ void DieWithError(char *errorMessage)
     exit(1);
 }
 
-void CatchAlarm(int ignored);            /* Handler for SIGALRM */
-
-
+void CatchAlarm(int ignored)     /* Handler for SIGALRM */
+{
+    tries += 1;
+}
 
 //neighbour table, record info read from conf file
 struct config{
@@ -431,10 +432,6 @@ int main(int argc, char *argv[])
      exit(0);
 }
 
-void CatchAlarm(int ignored)     /* Handler for SIGALRM */
-{
-    tries += 1;
-}
 
 void convert_to_string(char arr[NUMNODES*5],struct distance_vector* d)  //serializing a distance vector to be sent from through a socket
 {
